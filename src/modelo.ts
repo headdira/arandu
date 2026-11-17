@@ -1,4 +1,5 @@
-// Arandu — camada de modelo (porte modificado de models/base.py, models/openai/chat.py e like.py).
+// Arandu — Camada de modelo: Model (base) e OpenAILike (Chat Completions), com retry seguro e cache.
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 import { createHash } from "node:crypto";
 import { type CacheStore, executarFuncao, type Function, type Injetados, parseArgs } from "./ferramentas.ts";
 import {
@@ -39,7 +40,6 @@ export type ModelOpts = {
   instructions?: string[];
 };
 
-// models/base.py:193-272
 export function retentavel(e: unknown): boolean {
   if (!(e instanceof ModelProviderError)) return false;
   if (e.statusCode !== undefined && NAO_RETENTAR_STATUS.has(e.statusCode)) return false;
@@ -87,7 +87,7 @@ export abstract class Model {
   }
 }
 
-// models/openai/chat.py:314-379 — formato enviado; ids de tool call remapeados p/ "call_" (≤ 40).
+// formato enviado; ids de tool call remapeados p/ "call_" (≤ 40).
 export function formatarMensagens(msgs: Message[], roleSistema: "system" | "developer"): any[] {
   const mapa = new Map<string, string>();
   let n = 0;
@@ -105,7 +105,7 @@ export function formatarMensagens(msgs: Message[], roleSistema: "system" | "deve
   });
 }
 
-// models/openai/like.py — qualquer API Chat Completions compatível.
+// qualquer API Chat Completions compatível.
 export class OpenAILike extends Model {
   baseUrl: string;
   apiKey?: string;
@@ -147,7 +147,7 @@ export function lerRespostaOpenAI(j: any): RespostaInvocacao {
   const m = j?.choices?.[0]?.message ?? {};
   let content: string | null = typeof m.content === "string" ? m.content : null;
   let reasoningContent: string | undefined = m.reasoning_content ?? m.reasoning;
-  // utils/reasoning.py:12-30 — <think> vai para reasoning_content.
+  // <think> vai para reasoning_content.
   if (content?.includes("</think>")) {
     const i = content.indexOf("</think>");
     reasoningContent = content.slice(0, i).replace(/^[\s\S]*?<think>/, "").trim();
@@ -164,7 +164,7 @@ export function lerRespostaOpenAI(j: any): RespostaInvocacao {
   };
 }
 
-// models/base.py:445-480 — chave do cache de resposta.
+// chave do cache de resposta.
 function chaveResposta(model: Model, msgs: Message[], temTools: boolean, responseFormat: unknown) {
   const base = JSON.stringify({ model_id: model.id, messages: msgs.map((m) => ({ role: m.role, content: m.content })), has_tools: temTools, response_format: responseFormat ?? null, stream: false });
   return "model:" + createHash("md5").update(base).digest("hex");
@@ -180,11 +180,11 @@ export type ResultadoLoop = {
 
 export type Emissor = (ev: { event: RunEvent; tool?: ToolExecution; content?: unknown; model?: string }) => void;
 
-// models/base.py:651-881 + 2424-2592 — loop: chama o modelo, executa tools (em sequência), repete.
+// loop: chama o modelo, executa tools (em sequência), repete.
 export async function responder(
   model: Model,
   a: {
-    messages: Message[]; // mutada in place (assistant/tool anexados), como no Agno
+    messages: Message[]; // mutada in place (assistant/tool anexados)
     functions: Map<string, Function>;
     toolsParaModelo: Invocacao["tools"];
     toolChoice?: unknown;
@@ -221,7 +221,7 @@ export async function responder(
     quem = r.model ?? quem;
     a.emitir?.({ event: RunEvent.modelRequestCompleted, model: r.model ?? model.id });
     const assistant: Message = { role: "assistant", content: r.message.content, toolCalls: r.message.toolCalls?.length ? r.message.toolCalls : undefined, reasoningContent: r.message.reasoningContent, id: uuid(), createdAt: Math.floor(Date.now() / 1000) };
-    // content acumula o texto de todas as assistants, sem separador (base.py:1143-1147).
+    // content acumula o texto de todas as assistants, sem separador.
     if (r.message.content) content = (content ?? "") + r.message.content;
     if (r.message.reasoningContent) reasoning = (reasoning ?? "") + r.message.reasoningContent;
     a.messages.push(assistant);
@@ -241,7 +241,7 @@ export async function responder(
         continue;
       }
       chamadas++;
-      // base.py:2444-2453 — acima do limite: recusa, mas o loop continua.
+      // acima do limite: recusa, mas o loop continua.
       if (a.toolCallLimit !== undefined && chamadas > a.toolCallLimit) {
         a.messages.push(msgTool(`Tool call limit reached. Tool call ${f.name} not executed. Don't try to execute it again.`, true));
         continue;

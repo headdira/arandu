@@ -1,17 +1,6 @@
 Arandu
 Copyright 2026 Gerson Moreira
 
-Este produto inclui software derivado do Agno (https://github.com/agno-agi/agno), versão 3.2.0.
-This product includes software derived from Agno (https://github.com/agno-agi/agno), version 3.2.0.
-Agno: Copyright 2025-2026 Agno Inc., licensed under the Apache License, Version 2.0 (see LICENSE).
-
-Arandu é uma OBRA DERIVADA E MODIFICADA: a API e o comportamento do Agent, das tools/Toolkit, do
-RunContext/RunOutput/eventos, da sessão/DB, dos retries e do Team foram reescritos em TypeScript para
-rodar em funções serverless (Node 22+). Não é o código original nem é mantido ou endossado pela Agno Inc.
-"Agno" é marca da Agno Inc.; o nome é usado aqui só para indicar a origem do código.
-
-Arandu is a DERIVED AND MODIFIED WORK: the API and behavior of Agent, tools/Toolkit, RunContext/RunOutput/
-events, session/DB, retries and Team were rewritten in TypeScript to run in serverless functions
-(Node 22+). It is not the original code and is not maintained or endorsed by Agno Inc. "Agno" is a
-trademark of Agno Inc.; the name is used here only to state where the code comes from.
-Deliberate differences from Agno are listed in README.md.
+Partes deste software são obra derivada e modificada do Agno (https://github.com/agno-agi/agno),
+Copyright 2025-2026 Agno Inc., licenciado sob a Apache License, Version 2.0 (ver LICENSE).
+Portions of this software are a modified derivative of Agno, licensed under Apache-2.0.

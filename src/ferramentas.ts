@@ -1,6 +1,5 @@
-// Arandu — tools (porte modificado de tools/decorator.py, tools/function.py, tools/toolkit.py).
-// Em TS não há type hints/docstring: o schema JSON é explícito. Injeção por nome do Agno vira um
-// 2º argumento { runContext, agent } na função.
+// Arandu — Tools: tool(), Function e Toolkit (schema JSON explícito, hooks, cache, limites).
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 import { createHash } from "node:crypto";
 import type { RunContext, ToolExecution } from "./tipos.ts";
 
@@ -14,7 +13,7 @@ export type FunctionOpts = {
   parameters?: JsonSchema;
   strict?: boolean;
   instructions?: string;
-  addInstructions?: boolean; // default true (tools/decorator.py)
+  addInstructions?: boolean; // default true
   showResult?: boolean;
   stopAfterToolCall?: boolean;
   preHook?: (ctx: { name: string; args: any; runContext: RunContext }) => unknown;
@@ -38,7 +37,6 @@ export class Function {
   cacheResults: boolean;
   cacheTtl: number;
   entrypoint: Entrypoint;
-  // tools/function.py:1215-1325
   constructor(o: FunctionOpts) {
     this.name = o.name;
     this.description = o.description;
@@ -47,7 +45,7 @@ export class Function {
     this.instructions = o.instructions;
     this.addInstructions = o.addInstructions ?? true;
     this.stopAfterToolCall = o.stopAfterToolCall ?? false;
-    // decorator.py:292-294: stop_after_tool_call sem show_result explícito → show_result=True
+    // stop_after_tool_call sem show_result explícito → show_result=True
     this.showResult = o.showResult ?? this.stopAfterToolCall;
     this.preHook = o.preHook;
     this.postHook = o.postHook;
@@ -67,15 +65,15 @@ export class Function {
   }
 }
 
-// @tool → tool({...}). Retorna Function, como no Agno.
+// @tool → tool({...}). Retorna Function.
 export const tool = (o: FunctionOpts) => new Function(o);
 
-// function.py:1693-1709 — schema à mão: additionalProperties false; required mantido do autor.
+// schema à mão: additionalProperties false; required mantido do autor.
 function schemaNormal(s: JsonSchema): JsonSchema {
   return { ...s, type: "object", properties: s.properties ?? {}, required: (s.required ?? []).filter((r) => r in (s.properties ?? {})), additionalProperties: false };
 }
 
-// function.py:1831-1887 — strict: todo objeto fecha e todas as properties viram required.
+// strict: todo objeto fecha e todas as properties viram required.
 export function schemaStrict(s: any): any {
   if (Array.isArray(s)) return s.map(schemaStrict);
   if (!s || typeof s !== "object") return s;
@@ -89,7 +87,6 @@ export function schemaStrict(s: any): any {
   return o;
 }
 
-// tools/toolkit.py:115-325
 export type ToolkitOpts = {
   name?: string;
   tools: Function[];
@@ -135,7 +132,7 @@ export type CacheStore = {
   setCache(chave: string, valor: string): Promise<void>;
 };
 
-// utils/functions.py:10-75 — parse dos argumentos com as mensagens literais do Agno.
+// parse dos argumentos.
 export function parseArgs(raw: string | null | undefined): { ok: true; args: Record<string, unknown> } | { ok: false; erro: string } {
   const txt = raw && raw.trim() ? raw : "{}";
   let v: unknown;
@@ -156,17 +153,17 @@ export function parseArgs(raw: string | null | undefined): { ok: true; args: Rec
   return { ok: true, args };
 }
 
-// models/base.py:2347-2365 — DESVIO: não-string vira JSON (o Agno faz str() do Python).
+// Resultado não-string vira JSON.
 export const stringificar = (r: unknown): string => (typeof r === "string" ? r : r === undefined ? "None" : JSON.stringify(r));
 
-// function.py:1890-1949 — chave do cache: nome + identidade (user/sessão) + args ordenados.
+// chave do cache: nome + identidade (user/sessão) + args ordenados.
 function chaveCache(f: Function, args: Record<string, unknown>, ctx: RunContext) {
   const ordenado = JSON.stringify(Object.fromEntries(Object.entries(args).sort(([a], [b]) => a.localeCompare(b))));
   const identidade = JSON.stringify({ user_id: ctx.userId ?? null, session_id: ctx.sessionId });
   return "tool:" + createHash("md5").update(`${f.name}:${identidade}:${ordenado}`).digest("hex");
 }
 
-// tools/function.py:2618-2731 + models/base.py:2169-2207 — executa e devolve a mensagem tool.
+// executa e devolve a mensagem tool.
 export async function executarFuncao(
   f: Function,
   call: { id: string; argumentos: Record<string, unknown> },
@@ -198,7 +195,7 @@ export async function executarFuncao(
   }
 }
 
-// Instruções das tools no system message (agent/_tools.py:483-665).
+// Instruções das tools no system message.
 export function instrucoesDasTools(itens: (Function | Toolkit)[]): string[] {
   const out: string[] = [];
   for (const i of itens) {

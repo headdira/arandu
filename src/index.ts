@@ -1,4 +1,5 @@
-// Arandu — porte modificado do núcleo do Agno 3.2.0 para TypeScript (Apache-2.0; ver NOTICE).
+// Arandu — orquestração de agentes de IA para funções serverless.
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 export { Agent, type AgentOpts, type Hook, type RunOpts, mergeDictionaries } from "./agente.ts";
 export { Team, type TeamMode } from "./time.ts";
 export { Function, Toolkit, tool, type FunctionOpts, type ToolkitOpts, type Injetados, type JsonSchema } from "./ferramentas.ts";

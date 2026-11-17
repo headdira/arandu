@@ -1,11 +1,11 @@
-// Arandu — tipos do núcleo (porte modificado do Agno 3.2.0: models/message.py, run/base.py,
-// run/agent.py, session/agent.py). Nomes em camelCase; valores de enum iguais aos do Agno.
+// Arandu — Tipos do núcleo: mensagens, RunOutput, eventos, sessão.
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 
 export type Role = "system" | "developer" | "user" | "assistant" | "tool";
 
 export type ToolCall = { id: string; type: "function"; function: { name: string; arguments: string } };
 
-// models/message.py:56-127 — só role/content/name/tool_call_id/tool_calls vão para a API.
+// só role/content/name/tool_call_id/tool_calls vão para a API.
 export type Message = {
   role: Role;
   content: string | any[] | null;
@@ -24,7 +24,6 @@ export type Message = {
   createdAt?: number;
 };
 
-// run/base.py:378-392
 export const RunStatus = {
   pending: "PENDING",
   running: "RUNNING",
@@ -35,10 +34,9 @@ export const RunStatus = {
   regenerated: "REGENERATED",
 } as const;
 export type RunStatus = (typeof RunStatus)[keyof typeof RunStatus];
-// run/base.py:445-450
 export const HISTORY_SKIP_STATUSES: RunStatus[] = [RunStatus.paused, RunStatus.cancelled, RunStatus.error, RunStatus.regenerated];
 
-// run/agent.py:145-198 (recorte usado)
+// Campos do RunOutput.
 export const RunEvent = {
   runStarted: "RunStarted",
   runContent: "RunContent",
@@ -57,7 +55,7 @@ export const RunEvent = {
 } as const;
 export type RunEvent = (typeof RunEvent)[keyof typeof RunEvent];
 
-// models/response.py:27-69 (sem campos de HITL)
+// Resposta do modelo.
 export type ToolExecution = {
   toolCallId: string;
   toolName: string;
@@ -81,7 +79,7 @@ export type RunMetrics = {
 
 export const metricasVazias = (): RunMetrics => ({ inputTokens: 0, outputTokens: 0, totalTokens: 0, durationMs: 0, modelRequests: 0 });
 
-// run/agent.py:650-735 (recorte)
+// Eventos do run.
 export type RunOutput = {
   runId: string;
   agentId: string;
@@ -123,7 +121,7 @@ export type RunEventData = {
   sessionState?: Record<string, unknown>;
 };
 
-// run/base.py:18-48 — o que a tool recebe (injetado, nunca vem do modelo).
+// o que a tool recebe (injetado, nunca vem do modelo).
 export type RunContext = {
   runId: string;
   sessionId: string;
@@ -135,7 +133,6 @@ export type RunContext = {
   outputSchema?: unknown;
 };
 
-// session/agent.py:15-45
 export type AgentSession = {
   sessionId: string;
   agentId?: string;
@@ -149,7 +146,7 @@ export type AgentSession = {
   updatedAt: number;
 };
 
-// exceptions.py — guardrails (não são re-tentados).
+// guardrails (não são re-tentados).
 export class InputCheckError extends Error {}
 export class OutputCheckError extends Error {}
 export class ModelProviderError extends Error {
@@ -159,7 +156,6 @@ export class ModelProviderError extends Error {
     this.statusCode = statusCode;
   }
 }
-// exceptions.py:134-147
 export const NAO_RETENTAR_STATUS = new Set([400, 401, 403, 404, 413, 422]);
 export const PADROES_JANELA = ["context_length_exceeded", "context window", "maximum context length", "token limit", "max_tokens", "too many tokens", "payload too large"];
 

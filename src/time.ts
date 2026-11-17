@@ -1,5 +1,5 @@
-// Arandu — Team nos modos route e coordinate (porte modificado de team/team.py, team/_messages.py,
-// team/_default_tools.py). O líder é um Agent com a tool delegate_task_to_member.
+// Arandu — Team: orquestração de agentes nos modos route e coordinate (o líder delega com delegate_task_to_member).
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 import { Agent, type AgentOpts, mergeDictionaries, type RunOpts } from "./agente.ts";
 import { tool } from "./ferramentas.ts";
 import type { RunOutput } from "./tipos.ts";
@@ -8,7 +8,7 @@ export type TeamMode = "coordinate" | "route";
 
 const idDoMembro = (a: Agent) => a.o.id ?? (a.name ?? a.id).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-// team/_messages.py:110-330 (textos literais do <team>; regras de delegação resumidas por modo)
+// Bloco <team> da system message do líder: membros e regra de delegação por modo.
 function blocoTime(membros: Agent[], mode: TeamMode): string {
   const lista = membros
     .map((m) => [`<member id="${idDoMembro(m)}" name="${m.name ?? idDoMembro(m)}">`, m.o.role ? `  Role: ${m.o.role}` : "", m.o.description ? `  Description: ${m.o.description}` : "", "</member>"].filter(Boolean).join("\n"))

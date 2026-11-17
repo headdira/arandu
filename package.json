@@ -1,19 +1,46 @@
 {
   "name": "arandu",
   "version": "0.1.0",
-  "description": "Agentes de IA em TypeScript para serverless: Agent, tools, Team, sessão e retries — porte do núcleo do Agno 3.2.0. / AI agents in TypeScript for serverless — a port of the Agno 3.2.0 core.",
+  "description": "Orquestração de agentes de IA para funções serverless, em TypeScript. / AI agent orchestration for serverless functions, in TypeScript.",
   "type": "module",
   "license": "Apache-2.0",
   "author": "Gerson Moreira (https://github.com/headdira)",
-  "repository": { "type": "git", "url": "git+https://github.com/headdira/arandu.git" },
-  "keywords": ["ai", "agents", "llm", "typescript", "serverless", "netlify", "openai", "mcp", "agno"],
-  "engines": { "node": ">=22.6" },
-  "exports": { ".": "./src/index.ts" },
-  "files": ["src", "!src/**/*.test.ts", "LICENSE", "NOTICE"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/headdira/arandu.git"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "multi-agent",
+    "orchestration",
+    "llm",
+    "typescript",
+    "serverless",
+    "tools",
+    "mcp",
+    "openai"
+  ],
+  "engines": {
+    "node": ">=22.6"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "LICENSE",
+    "NOTICE"
+  ],
   "scripts": {
     "test": "node --test --experimental-strip-types src/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "exemplo": "node --experimental-strip-types examples/basico.ts"
+    "exemplo": "node --experimental-strip-types examples/basico.ts",
+    "exemplo:time": "node --experimental-strip-types examples/time.ts"
   },
-  "devDependencies": { "@types/node": "22.10.2", "typescript": "5.7.2" }
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2"
+  }
 }

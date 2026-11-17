@@ -1,7 +1,5 @@
-// Arandu — MCPTools (porte modificado de tools/mcp do Agno): conecta num servidor MCP (Streamable HTTP,
-// JSON-RPC por POST), lista as ferramentas e devolve um Toolkit. O transporte é um `fetch` qualquer:
-// HTTP de verdade ou uma função no mesmo processo (ex.: (url, init) => sino.atender(new Request(url, init))).
-// Cabeçalhos (ex.: Authorization) vêm de uma função e ficam aqui: nunca vão para o modelo.
+// Arandu — mcpTools: conecta num servidor MCP (Streamable HTTP) e expõe as tools dele ao agente.
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 import { Function, Toolkit } from "./ferramentas.ts";
 
 export type Buscar = (url: string, init: RequestInit) => Promise<Response>;

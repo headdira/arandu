@@ -1,5 +1,5 @@
-// Arandu — sessão e banco (porte modificado de db/base.py e db/in_memory/in_memory_db.py).
-// BlobsDb: Netlify Blobs (ou qualquer store com get/getWithMetadata/setJSON condicional).
+// Arandu — Persistência de sessões: InMemoryDb e BlobsDb (qualquer store chave-valor com escrita condicional por etag).
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 import type { CacheStore } from "./ferramentas.ts";
 import type { AgentSession, RunOutput } from "./tipos.ts";
 

@@ -1,8 +1,7 @@
-// Arandu — montagem das mensagens (porte modificado de agent/_messages.py, utils/message.py,
-// utils/prompts.py e session/agent.py:get_messages).
+// Arandu — Montagem da system message e das mensagens do run.
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 import { HISTORY_SKIP_STATUSES, type AgentSession, type Message } from "./tipos.ts";
 
-// utils/message.py:375-392
 export function renderInstructions(lista: string[]): string {
   const itens = lista.map((i) => i.trim()).filter(Boolean);
   if (itens.length === 1) return itens[0];
@@ -10,8 +9,8 @@ export function renderInstructions(lista: string[]): string {
   return itens.map((i) => (i.includes("\n") ? i : `- ${i}`)).join("\n\n");
 }
 
-// agent/_messages.py:885-929 — {chave} (e $chave) com session_state > dependencies > metadata > user_id.
-// DESVIO: valores não-string viram JSON (o Agno usa str() do Python).
+// {chave} (e $chave) com session_state > dependencies > metadata > user_id.
+// Valores não-string viram JSON.
 export function formatarComVariaveis(texto: string, fontes: Record<string, unknown>[]): string {
   if (!texto.includes("{") && !texto.includes("$")) return texto;
   const vars: Record<string, unknown> = {};
@@ -28,7 +27,7 @@ export function formatarComVariaveis(texto: string, fontes: Record<string, unkno
   return t;
 }
 
-// utils/prompts.py:9-94 (schema dict/str; DESVIO: termina citando JSON.parse no lugar de json.loads)
+// Instrução de saída estruturada (schema objeto ou texto).
 export function promptJson(schema: unknown): string {
   let p = "Provide your output as a JSON containing the following fields:";
   p += typeof schema === "string" ? `\n<json_fields>\n${schema}\n</json_fields>` : `\n<json_fields>\n${JSON.stringify(schema)}\n</json_fields>`;
@@ -57,7 +56,7 @@ export type PartesSistema = {
   variaveis?: Record<string, unknown>[] | null; // null = sem resolve_in_context
 };
 
-// agent/_messages.py:1017-1256 — ordem, tags e textos literais do Agno.
+// ordem, tags e textos da system message.
 export function montarSistema(p: PartesSistema): string | null {
   const adicional: string[] = [];
   if (p.markdown && !p.temOutputSchema) adicional.push("Use markdown to format your answers.");
@@ -73,7 +72,7 @@ export function montarSistema(p: PartesSistema): string | null {
   }
   if (adicional.length) s += `<additional_information>${adicional.map((a) => `\n- ${a}`).join("")}\n</additional_information>\n\n`;
   for (const ti of p.toolInstructions) s += `${ti}\n`;
-  if (p.variaveis) s = formatarComVariaveis(s, p.variaveis); // só até as instruções de tools, como no Agno
+  if (p.variaveis) s = formatarComVariaveis(s, p.variaveis); // só até as instruções de tools
   if (p.expectedOutput) s += `<expected_output>\n${p.expectedOutput.trim()}\n</expected_output>\n\n`;
   if (p.additionalContext) s += `${p.additionalContext}\n`;
   if (p.jsonPrompt) s += p.jsonPrompt;
@@ -82,7 +81,6 @@ export function montarSistema(p: PartesSistema): string | null {
   return s ? s : null;
 }
 
-// session/agent.py:141-262 + agent/_messages.py:247-293/2016-2045
 export function historicoDaSessao(
   sessao: AgentSession | null,
   o: { numHistoryRuns?: number; numHistoryMessages?: number; skipRoles?: string[]; maxToolCallsFromHistory?: number },
@@ -113,7 +111,6 @@ export function historicoDaSessao(
   return todas.map((m) => ({ ...m, fromHistory: true }));
 }
 
-// utils/message.py:110-165
 function limitarToolsDoHistorico(msgs: Message[], max: number): Message[] {
   const tools = msgs.filter((m) => m.role === "tool");
   if (tools.length <= max) return msgs;
@@ -131,7 +128,7 @@ function limitarToolsDoHistorico(msgs: Message[], max: number): Message[] {
   return out;
 }
 
-// Python-ismo trocado por ISO local: "2026-11-16 10:00:00-03:00" no fuso dado.
+// Data/hora em ISO local: "2026-11-16 10:00:00-03:00" no fuso dado.
 export function dataHoraNoFuso(fuso?: string, agora = new Date()): string {
   const tz = fuso || "UTC";
   try {

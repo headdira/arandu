@@ -24,7 +24,7 @@ const chama = (...cs: [string, object][]): RespostaInvocacao => ({
   message: { content: null, toolCalls: cs.map(([n, a], i) => ({ id: `call_${i}${n}`, type: "function" as const, function: { name: n, arguments: JSON.stringify(a) } })) },
 });
 
-test("system message: ordem e textos literais do Agno", () => {
+test("system message: ordem e textos", () => {
   assert.equal(renderInstructions(["a"]), "a");
   assert.equal(renderInstructions(["a", "b"]), "- a\n- b");
   const s = montarSistema({

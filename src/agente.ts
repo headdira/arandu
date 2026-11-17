@@ -1,6 +1,5 @@
-// Arandu — Agent (porte modificado de agent/agent.py, agent/_run.py, agent/_storage.py,
-// agent/_session.py, agent/_hooks.py, agent/_response.py). Um único `run()` assíncrono (o Agno tem
-// run/arun) e `runStream()` como AsyncGenerator de eventos.
+// Arandu — Agent: run com retries, hooks, tools, sessão, histórico e eventos.
+// Contém código modificado de terceiros sob Apache-2.0; ver NOTICE.
 import type { BaseDb } from "./db.ts";
 import { achatarTools, type Function, instrucoesDasTools, type Injetados, schemaStrict, tool, type Toolkit } from "./ferramentas.ts";
 import { dataHoraNoFuso, formatarComVariaveis, historicoDaSessao, montarSistema, promptJson } from "./mensagens.ts";
@@ -86,7 +85,7 @@ export type RunOpts = {
 
 const CURRENT = ["current_user_id", "current_session_id", "current_run_id"];
 
-// utils/merge_dict.py:4-20 — deep merge, b vence.
+// deep merge, b vence.
 export function mergeDictionaries(a: Record<string, any>, b: Record<string, any>) {
   for (const [k, v] of Object.entries(b)) {
     if (v && typeof v === "object" && !Array.isArray(v) && a[k] && typeof a[k] === "object" && !Array.isArray(a[k])) mergeDictionaries(a[k], v);
@@ -103,7 +102,7 @@ export class Agent {
   sessionId?: string;
   constructor(o: AgentOpts) {
     this.o = { resolveInContext: true, storeToolMessages: true, storeHistoryMessages: false, retries: 0, delayBetweenRetries: 1, ...o };
-    // agent.py:595-603 — sem nenhum dos dois, num_history_runs = 3
+    // sem nenhum dos dois, num_history_runs = 3
     if (this.o.numHistoryRuns === undefined && this.o.numHistoryMessages === undefined) this.o.numHistoryRuns = 3;
     else if (this.o.numHistoryRuns !== undefined && this.o.numHistoryMessages !== undefined) this.o.numHistoryMessages = undefined;
     this.model = o.model;
@@ -112,7 +111,7 @@ export class Agent {
     this.sessionId = o.sessionId;
   }
 
-  // ---------- sessão (agent/_storage.py:568-689) ----------
+  // ---------- sessão ----------
   private async lerOuCriarSessao(sessionId: string, userId?: string): Promise<AgentSession> {
     if (this.o.db && !this.o.teamId) {
       const s = await this.o.db.getSession(sessionId, userId); // erro de leitura propaga, de propósito
@@ -144,14 +143,14 @@ export class Agent {
     if (doDb && Object.keys(doDb).length && !this.o.overwriteDbSessionState) {
       const merged = mergeDictionaries(structuredClone(doDb), doRun);
       for (const k of Object.keys(doRun)) delete doRun[k];
-      Object.assign(doRun, merged); // mesma referência, como no Agno
+      Object.assign(doRun, merged); // mesma referência
       estado = doRun;
     }
     s.sessionData = { ...(s.sessionData ?? {}), sessionState: estado };
     return estado;
   }
 
-  // ---------- tools padrão (agent/_default_tools.py) ----------
+  // ---------- tools padrão ----------
   private toolsDoRun(sessao: AgentSession): (Function | Toolkit)[] {
     const t: (Function | Toolkit)[] = [...(this.o.tools ?? [])];
     if (this.o.readChatHistory)
@@ -187,11 +186,11 @@ export class Agent {
     return [...(v === undefined ? [] : Array.isArray(v) ? v : [v]), ...(this.model.instructions ?? [])];
   }
 
-  // ---------- run (agent/_run.py:368-775) ----------
+  // ---------- run ----------
   async run(input: string | Message[], opts: RunOpts = {}): Promise<RunOutput> {
     const runId = opts.runId ?? uuid();
     const sessionId = opts.sessionId ?? this.sessionId ?? uuid();
-    if (!opts.sessionId && !this.sessionId) this.sessionId = sessionId; // sticky, como no Agno
+    if (!opts.sessionId && !this.sessionId) this.sessionId = sessionId; // sticky
     const userId = opts.userId || this.o.userId;
     const deps = { ...(this.o.dependencies ?? {}), ...(opts.dependencies ?? {}) };
     const metadata = { ...(this.o.metadata ?? {}), ...(opts.metadata ?? {}) };
@@ -295,7 +294,7 @@ export class Agent {
           await dormir(atraso * 1000);
           continue;
         }
-        // Esgotou: não lança. Status ERROR, content = str(e), persiste e devolve (_run.py:740-760).
+        // Esgotou: não lança. Status ERROR, content = String(e), persiste e devolve.
         out.status = RunStatus.error;
         if (!out.messages.length) out.messages = msgs;
         out.content ??= String(e?.message ?? e);
@@ -380,7 +379,7 @@ export class Agent {
     return c;
   }
 
-  // agent/_run.py:6053-6174 — scrub, métricas somadas, estado sem current_*, sessão e depois run.
+  // scrub, métricas somadas, estado sem current_*, sessão e depois run.
   private async persistir(out: RunOutput, sessao: AgentSession, ctx: RunContext, eventos: RunEventData[]) {
     out.sessionState = this.estadoLimpo(ctx.sessionState);
     if (this.o.storeEvents) out.events = eventos;
